@@ -1,0 +1,8 @@
+namespace ayy {
+class Mate 
+	{
+		
+
+		
+	};
+}
