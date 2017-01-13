@@ -3,11 +3,19 @@
 #include <stdlib.h>
 #include <time.h>
 #include <SDL.h>
+#include <ostream>
+#include <fstream>
+#include <istream>
+
+using namespace std;
 
 int main(int argc, char *argv[])
 {
-	//Declaration
+
+	//Initiate SDL
 	SDL_Init(SDL_INIT_EVERYTHING);
+
+	//Declare Variables
 	unsigned short opcode;
 	unsigned char memory[4096];
 	unsigned char V[16];
@@ -37,6 +45,11 @@ int main(int argc, char *argv[])
 		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
+	ifstream FileRW;
+	ofstream LogRW;
+
+	//Logging
+	
 
 	//Initialization
 	pc = 0x200;  // Program counter starts at 0x200
@@ -49,10 +62,22 @@ int main(int argc, char *argv[])
 	{
 		memory[i + 0x50] = chip8font[i];
 	}
-
-	FILE * romfile = fopen("emu.c8", "r");
-
+	
+	//Load ROM
+	FileRW.open("emu.c8", ios_base::binary);
+	unsigned char hexarray[1024];
+	FileRW.read((char*)&hexarray, 1024);
+	for (int i = 0; i < 1024; i++)
+	{
+		memory[512 + i] = hexarray[i];
+	}
+	
+	
+	//Exit
+	SDL_Quit();
+	LogRW.open("lastmem.hex", iostream::binary);
+	LogRW.write((char*)&memory, 4096);
+	FileRW.close();
 	system("pause");
-
 	return 0;
 }
