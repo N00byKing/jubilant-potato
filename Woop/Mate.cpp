@@ -8,24 +8,24 @@
 #include <istream>
 
 using namespace std;
+bool ExitProgram;
 
 int main(int argc, char *argv[])
 {
 
-	//Initiate SDL
-	SDL_Init(SDL_INIT_EVERYTHING);
-
+	
 	//Declare Variables
+	ExitProgram = false;
 	unsigned short opcode;
 	unsigned char memory[4096];
 	unsigned char V[16];
 	unsigned short I;
 	unsigned short pc;
-	unsigned char gfx[64 * 32];
 	unsigned char delayt;
 	unsigned char soundt;
 	unsigned short stack[16];
 	unsigned short sp;
+	unsigned char gfx[64 * 32];
 	unsigned char chip8font[80] =
 	{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -47,9 +47,14 @@ int main(int argc, char *argv[])
 	};
 	ifstream FileRW;
 	ofstream LogRW;
-
-	//Logging
 	
+	//Initiate SDL
+	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_Window *sdlWindow;
+	SDL_Renderer *sdlRenderer;
+	SDL_CreateWindowAndRenderer(64, 32, SDL_WINDOW_SHOWN, &sdlWindow, &sdlRenderer);
+	SDL_Event event;
+	SDL_SetRenderDrawColor(sdlRenderer, 200, 211, 0, 0);
 
 	//Initialization
 	pc = 0x200;  // Program counter starts at 0x200
@@ -64,7 +69,7 @@ int main(int argc, char *argv[])
 	}
 	
 	//Load ROM
-	FileRW.open("emu.c8", ios_base::binary);
+	FileRW.open("emu.c8", iostream::binary);
 	unsigned char hexarray[1024];
 	FileRW.read((char*)&hexarray, 1024);
 	for (int i = 0; i < 1024; i++)
@@ -72,12 +77,102 @@ int main(int argc, char *argv[])
 		memory[512 + i] = hexarray[i];
 	}
 	
+	//Logging Start
+	LogRW.open("log.txt", ofstream::out);
+	LogRW << "Start" << "\r\n";
+
+	//Start Emulation
+	while (!ExitProgram)
+	{
+		//To Be Edited, currently only Exit Event
+		SDL_PollEvent(&event);
+		switch (event.type)
+		{
+			case SDL_KEYUP:
+				ExitProgram = true;
+		}
+
+		//Get new opcode and log it
+		opcode = memory[pc] << 8 | memory[pc + 1];
+		LogRW << opcode << "\r\n";
+
+		//Execute opcode
+		switch(opcode & 0xF000) 
+		{
+			case 0x1000:
+				pc = (opcode & 0x0FFF);
+				break;
+		
+			case 0x2000:
+				sp++;
+				stack[sp] = pc;
+				pc = (opcode & 0x0FFF);
+				break;
+			
+			case 0x3000:
+				if (V[(opcode & 0x0F00 >> 8)] == (opcode & 0x00FF)) 
+				{
+					pc += 4;
+				}
+				else 
+				{
+					pc += 2;
+				}
+				break;
+
+			case 0x6000:
+				V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF);
+				pc += 2;
+				break;
+			
+			case 0x7000:
+				V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] + (opcode & 0x00FF);
+				pc += 2;
+				break;
+
+			case 0xA000:
+				I = (opcode & 0x0FFF);
+				pc += 2;
+				break;
+			
+			case 0xD000:
+				for (int i = 0; i <= 8; i++)
+				{
+					for (int j = 0; j <= (opcode & 0x000F); j++) 
+					{
+						SDL_RenderDrawPoint(sdlRenderer, V[(opcode & 0x0F00) >> 8] + i, V[(opcode & 0x00F0) >> 4] + j);
+					}
+				}
+				SDL_RenderPresent(sdlRenderer);
+				pc += 2;
+				break;
+
+			
+
+
+			
+
+		}
+	}
 	
-	//Exit
+	LogRW << V[11] << "\r\n";
+	
+
+	//Exit SDL
 	SDL_Quit();
+
+	//Close log.txt
+	LogRW.close();
+
+	//Write Memory
 	LogRW.open("lastmem.hex", iostream::binary);
 	LogRW.write((char*)&memory, 4096);
+
+	//Close IOStreams
 	FileRW.close();
+	LogRW.close();
+
+	//Exit
 	system("pause");
 	return 0;
 }
