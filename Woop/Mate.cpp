@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 				break;
 			
 			case 0x3000:
-				if (V[(opcode & 0x0F00 >> 8)] == (opcode & 0x00FF)) 
+				if (V[((opcode & 0x0F00) >> 8)] == (opcode & 0x00FF)) 
 				{
 					pc += 4;
 				}
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	LogRW << V[11] << "\r\n";
+	LogRW << V[12] << "\r\n";
 	
 
 	//Exit SDL
