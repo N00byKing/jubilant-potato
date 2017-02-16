@@ -207,11 +207,9 @@ int main(int argc, char *argv[])
 		{
 			delayt--;
 		}
+		SDL_Delay(100);
 	}
 	
-	LogRW << V[12] << "\r\n";
-	
-
 	//Exit SDL
 	SDL_Quit();
 
