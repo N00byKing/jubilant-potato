@@ -99,6 +99,17 @@ int main(int argc, char *argv[])
 		//Execute opcode
 		switch(opcode & 0xF000) 
 		{
+			case 0x0000:
+				switch (opcode)
+				{
+					case 0x00EE:
+						pc = stack[sp];
+						sp--;
+						pc += 2;
+						break;
+				}
+				break;
+
 			case 0x1000:
 				pc = (opcode & 0x0FFF);
 				break;
@@ -135,6 +146,11 @@ int main(int argc, char *argv[])
 				pc += 2;
 				break;
 			
+			case 0xC000:
+				V[((opcode & 0x0F00) >> 8)] = ((rand() % 256) & (opcode & 0x00FF));
+				pc += 2;
+				break;
+
 			case 0xD000:
 				for (int i = 0; i <= 8; i++)
 				{
@@ -146,12 +162,50 @@ int main(int argc, char *argv[])
 				SDL_RenderPresent(sdlRenderer);
 				pc += 2;
 				break;
-
 			
+			case 0xE000:
+				pc += 2;
+				break;
 
+			case 0xF000:
+				switch (opcode & 0xF0FF)
+				{
+					case 0xF007:
+						V[((opcode & 0x0F00) >> 8)] = delayt;
+						pc += 2;
+						break;
+				
+					case 0xF015:
+						delayt = V[((opcode & 0x0F00) >> 8)];
+						pc += 2;
+						break;
 
-			
+					case 0xF029:
+						I = memory[0x50 + 5 * V[((opcode & 0x0F00) >> 8)]];
+						pc += 2;
+						break;
+						
+					case 0xF033:
+						memory[I] = (V[((opcode & 0x0F00) >> 8)] / 100);
+						memory[(I + 1)] = (V[((opcode & 0x0F00) >> 8)] / 10);
+						memory[(I + 2)] = (V[((opcode & 0x0F00) >> 8)] / 1);
+						pc += 2;
+						break;
 
+					case 0xF065:
+						for (int i = 0; i < ((opcode & 0x0F00) >> 8); i++) 
+						{
+							V[i] = (memory[I + i] << 8 | memory[I + i + 1]);
+						}
+						pc += 2;
+						break;
+				}
+				break;
+		}
+	
+		if (delayt != 0) 
+		{
+			delayt--;
 		}
 	}
 	
