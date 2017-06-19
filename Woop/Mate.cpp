@@ -25,7 +25,6 @@ int main(int argc, char *argv[])
 	unsigned char soundt;
 	unsigned short stack[16];
 	unsigned short sp;
-	unsigned char gfx[64 * 32];
 	unsigned char chip8font[80] =
 	{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -52,7 +51,7 @@ int main(int argc, char *argv[])
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_Window *sdlWindow;
 	SDL_Renderer *sdlRenderer;
-	SDL_CreateWindowAndRenderer(64, 32, SDL_WINDOW_SHOWN, &sdlWindow, &sdlRenderer);
+	SDL_CreateWindowAndRenderer(640, 320, SDL_WINDOW_SHOWN, &sdlWindow, &sdlRenderer);
 	SDL_Event event;
 	SDL_SetRenderDrawColor(sdlRenderer, 200, 211, 0, 0);
 
@@ -94,10 +93,10 @@ int main(int argc, char *argv[])
 
 		//Get new opcode and log it
 		opcode = memory[pc] << 8 | memory[pc + 1];
-		LogRW << opcode << "\r\n";
+		// LogRW << hex << uppercase << opcode << nouppercase << dec << "\r\n";
 
 		//Execute opcode
-		switch(opcode & 0xF000) 
+		switch (opcode & 0xF000) 
 		{
 			case 0x0000:
 				switch (opcode)
@@ -131,6 +130,17 @@ int main(int argc, char *argv[])
 				}
 				break;
 
+			case 0x4000:
+				if (V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF))
+				{
+					pc += 2;
+				}
+				else
+				{
+					pc += 4;
+				}
+				break;
+
 			case 0x6000:
 				V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF);
 				pc += 2;
@@ -141,6 +151,38 @@ int main(int argc, char *argv[])
 				pc += 2;
 				break;
 
+			case 0x8000:
+				switch (opcode & 0xF00F)
+				{
+					case 0x8000:
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+						pc += 2;
+						break;
+
+					case 0x8001:
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4];
+						pc += 2;
+						break;
+
+					case 0x8002:
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4];
+						pc += 2;
+						break;
+
+					case 0x8004:
+						if ((V[(opcode & 0x0F00) >> 8] + V[(opcode & 0x00F0) >> 4]) > 0xFF)
+						{
+							V[15] = 1;
+						}
+						else 
+						{
+							V[15] = 0;
+						}
+						V[(opcode & 0x0F00) >> 8] = ((V[(opcode & 0x0F00) >> 8] + V[(opcode & 0x00F0) >> 4]) & 0x00FF);
+						pc += 2;
+						break;
+				}
+				break;
 			case 0xA000:
 				I = (opcode & 0x0FFF);
 				pc += 2;
@@ -152,11 +194,29 @@ int main(int argc, char *argv[])
 				break;
 
 			case 0xD000:
-				for (int i = 0; i <= 8; i++)
+/*				for (int i = 0; i <= 8*zoom; i++)
 				{
-					for (int j = 0; j <= (opcode & 0x000F); j++) 
+					for (int j = 0; j <= (opcode & 0x000F)*zoom; j++) 
 					{
 						SDL_RenderDrawPoint(sdlRenderer, V[(opcode & 0x0F00) >> 8] + i, V[(opcode & 0x00F0) >> 4] + j);
+					}
+				} */
+
+				for (int i = 0; i < (opcode & 0x000F); i++)
+				{
+					for (int j = 0; j < 8; j++)
+					{
+						if (((memory[I + i*2] + memory[(I + 2) + i*2]) & j) != 0) 
+						{
+							for (int yz = 0; yz < 10; yz++) 
+							{
+								for (int xz = 0; xz < 10; xz++)
+								{
+									SDL_RenderDrawPoint(sdlRenderer, V[(opcode & 0x0F00) >> 8]*10 + i + xz, V[(opcode & 0x00F0) >> 4]*10 + j + yz);
+									SDL_RenderPresent(sdlRenderer);
+								}	
+							}	
+						}
 					}
 				}
 				SDL_RenderPresent(sdlRenderer);
@@ -164,7 +224,7 @@ int main(int argc, char *argv[])
 				break;
 			
 			case 0xE000:
-				pc += 2;
+				pc += 4;
 				break;
 
 			case 0xF000:
@@ -177,6 +237,11 @@ int main(int argc, char *argv[])
 				
 					case 0xF015:
 						delayt = V[((opcode & 0x0F00) >> 8)];
+						pc += 2;
+						break;
+
+					case 0xF018:
+						soundt = V[((opcode & 0x0F00) >> 8)];
 						pc += 2;
 						break;
 
@@ -201,13 +266,18 @@ int main(int argc, char *argv[])
 						break;
 				}
 				break;
+
+		SDL_Delay(10);
+
 		}
-	
 		if (delayt != 0) 
 		{
 			delayt--;
 		}
-		SDL_Delay(100);
+		if (soundt != 0)
+		{
+			soundt--;
+		}
 	}
 	
 	//Exit SDL
