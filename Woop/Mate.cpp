@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <SDL.h>
 #include <ostream>
 #include <fstream>
 #include <istream>
+#include <SDL.h>
 
 using namespace std;
 bool ExitProgram;

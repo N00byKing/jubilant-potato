@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Library">
+      <UniqueIdentifier>{16ad3c91-d3c4-4bd6-8285-e0992a545b8e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mate.h">
@@ -233,5 +236,13 @@
     <ClCompile Include="Mate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\SDL2.lib">
+      <Filter>Library</Filter>
+    </Library>
+    <Library Include="lib\SDL2main.lib">
+      <Filter>Library</Filter>
+    </Library>
   </ItemGroup>
 </Project>
